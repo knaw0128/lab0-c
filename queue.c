@@ -88,7 +88,7 @@ bool q_insert_tail(struct list_head *head, char *s)
 /* Remove an element from head of queue */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    if (!head || head->next == head) {
+    if (!head || list_empty(head)) {
         return NULL;
     }
     element_t *now = list_entry(head->next, element_t, list);
@@ -105,7 +105,7 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 /* Remove an element from tail of queue */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-    if (!head || head->prev == head) {
+    if (!head || list_empty(head)) {
         return NULL;
     }
     element_t *now = list_entry(head->prev, element_t, list);
@@ -136,7 +136,7 @@ int q_size(struct list_head *head)
 /* Delete the middle node in queue */
 bool q_delete_mid(struct list_head *head)
 {
-    if (!head || head->next == head) {
+    if (!head || list_empty(head)) {
         return false;
     }
     int step = 0;
@@ -318,7 +318,7 @@ struct list_head *MergeSort_sort(struct list_head *head, int size)
 /* Sort elements of queue in ascending order */
 void q_sort(struct list_head *head)
 {
-    if (!head) {
+    if (!head || list_empty(head)) {
         return;
     }
     struct list_head *newFirst = MergeSort_sort(head->next, q_size(head));
