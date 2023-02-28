@@ -96,9 +96,7 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
         memcpy(sp, now->value, bufsize - 1);
         sp[bufsize - 1] = '\0';
     }
-    struct list_head *newFirst = head->next->next;
-    newFirst->prev = head;
-    head->next = newFirst;
+    list_del(head->next);
     return now;
 }
 
@@ -113,9 +111,7 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
         memcpy(sp, now->value, bufsize - 1);
         sp[bufsize - 1] = '\0';
     }
-    struct list_head *newLast = head->prev->prev;
-    newLast->next = head;
-    head->prev = newLast;
+    list_del(head->prev);
     return now;
 }
 
@@ -150,8 +146,7 @@ bool q_delete_mid(struct list_head *head)
         fast = fast->next;
         step = 1 - step;
     }
-    slow->prev->next = slow->next;
-    slow->next->prev = slow->prev;
+    list_del(slow);
     free(list_entry(slow, element_t, list)->value);
     free(list_entry(slow, element_t, list));
     return true;
@@ -163,30 +158,28 @@ bool q_delete_dup(struct list_head *head)
     if (!head) {
         return false;
     }
-    struct list_head *pre = NULL;
-    struct list_head *safe;
     struct list_head *cursor;
-    list_for_each_safe (cursor, safe, head) {
-        bool duplicated = false;
-        while (pre && cursor != head &&
-               !strcmp(list_entry(pre, element_t, list)->value,
-                       list_entry(cursor, element_t, list)->value)) {
-            list_del(cursor);
-            free(list_entry(cursor, element_t, list)->value);
-            free(list_entry(cursor, element_t, list));
-            cursor = safe;
-            safe = safe->next;
-            duplicated = true;
+    list_for_each (cursor, head) {
+        struct list_head *now = cursor->next;
+        struct list_head *initCursor = cursor;
+        char *strNow = list_entry(cursor, element_t, list)->value;
+        while (now != head &&
+               !strcmp(strNow, list_entry(now, element_t, list)->value)) {
+            now = now->next;
         }
-        if (duplicated) {
-            list_del(pre);
-            free(list_entry(pre, element_t, list)->value);
-            free(list_entry(pre, element_t, list));
+        now = now->prev;
+        while (now != cursor || cursor != initCursor) {
+            struct list_head *toDel = cursor;
+            bool end = (now == cursor);
+            cursor = cursor->next;
+            list_del(toDel);
+            free(list_entry(toDel, element_t, list)->value);
+            free(list_entry(toDel, element_t, list));
+            if (end) {
+                cursor = cursor->prev;
+                break;
+            }
         }
-        if (cursor == head) {
-            break;
-        }
-        pre = cursor;
     }
     return true;
 }
