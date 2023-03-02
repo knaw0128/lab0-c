@@ -982,6 +982,37 @@ static bool do_next(int argc, char *argv[])
     return q_show(0);
 }
 
+bool do_shuffle(int argc, char *argv[])
+{
+    if (!current || !current->q) {
+        return false;
+    }
+    struct list_head *head = current->q;
+    int len = q_size(head), idx = 0;
+    struct list_head **array =
+        (struct list_head **) malloc(sizeof(struct list_head *) * len);
+    if (!array) {
+        return false;
+    }
+    struct list_head *node;
+    list_for_each (node, head) {
+        array[idx++] = node;
+    }
+    // srand(0xdeadbeef);
+    for (int i = len - 1; i > 0; i--) {
+        int choose = rand() % i;
+        // int choose_size = getrandom(&choose, sizeof(int), 0);
+        struct list_head *tmp = array[i];
+        array[i] = array[choose];
+        array[choose] = tmp;
+    }
+    INIT_LIST_HEAD(head);
+    for (int i = 0; i < len; i++)
+        list_add_tail(array[i], head);
+    free(array);
+    return true;
+}
+
 static void console_init()
 {
     ADD_COMMAND(new, "Create new queue", "");
@@ -1018,6 +1049,7 @@ static void console_init()
                 "");
     ADD_COMMAND(reverseK, "Reverse the nodes of the queue 'K' at a time",
                 "[K]");
+    ADD_COMMAND(shuffle, "Shuffle nodes in queue", "");
     add_param("length", &string_length, "Maximum length of displayed string",
               NULL);
     add_param("malloc", &fail_probability, "Malloc failure probability percent",
