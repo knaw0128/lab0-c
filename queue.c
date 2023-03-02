@@ -23,8 +23,7 @@ struct list_head *q_new()
     if (!newHead) {
         return NULL;
     }
-    newHead->prev = newHead;
-    newHead->next = newHead;
+    INIT_LIST_HEAD(newHead);
     return newHead;
 }
 
@@ -53,12 +52,12 @@ bool q_insert_head(struct list_head *head, char *s)
     if (!newNode) {
         return false;
     }
-    newNode->value = (char *) malloc(sizeof(char) * strlen(s) + 1);
+    newNode->value = (char *) malloc(sizeof(char) * (strlen(s) + 1));
     if (!(newNode->value)) {
         free(newNode);
         return false;
     }
-    memcpy(newNode->value, s, sizeof(char) * strlen(s) + 1);
+    memcpy(newNode->value, s, sizeof(char) * (strlen(s) + 1));
     INIT_LIST_HEAD(&newNode->list);
     list_add(&newNode->list, head);
     return true;
@@ -93,8 +92,9 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
     }
     element_t *now = list_entry(head->next, element_t, list);
     if (sp) {
-        memcpy(sp, now->value, bufsize - 1);
-        sp[bufsize - 1] = '\0';
+        int len = min(strlen(now->value), bufsize - 1);
+        memcpy(sp, now->value, len);
+        sp[len] = '\0';
     }
     list_del(head->next);
     return now;
@@ -108,8 +108,9 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
     }
     element_t *now = list_entry(head->prev, element_t, list);
     if (sp) {
-        memcpy(sp, now->value, bufsize - 1);
-        sp[bufsize - 1] = '\0';
+        int len = min(strlen(now->value), bufsize - 1);
+        memcpy(sp, now->value, len);
+        sp[len] = '\0';
     }
     list_del(head->prev);
     return now;
@@ -360,11 +361,10 @@ int q_merge(struct list_head *head)
         queue_contex_t *now = list_entry(contextNode, queue_contex_t, chain);
         ans += now->size;
         if (!(now->q) || list_empty(now->q)) {
-            now->q = NULL;
             continue;
         }
-        now->q->prev->next = NULL;
         now->q = now->q->next;
+        INIT_LIST_HEAD(now->q->prev);
     }
     INIT_LIST_HEAD(newQueueHead);
 
@@ -399,6 +399,5 @@ int q_merge(struct list_head *head)
         list_add_tail(newQueueNode, newQueueHead);
     }
     list_entry(head->next, queue_contex_t, chain)->q = newQueueHead;
-    list_entry(head->next, queue_contex_t, chain)->size = ans;
     return ans;
 }
